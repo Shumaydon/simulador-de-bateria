@@ -145,6 +145,9 @@
             keyMap[pad.dataset.key] = pad;
         });
 
+        // Estado para evitar repetição contínua da mesma tecla
+        const activeKeys = {};
+
         // 1. INICIALIZAÇÃO DO AUDIO (Requisito de segurança do navegador)
         function initAudio() {
             if (audioCtx) return;
@@ -349,8 +352,9 @@
                 e.preventDefault();
             }
 
-            // Impede disparos múltiplos segurando a tecla
-            if (e.repeat) return; 
+            // Impede disparos múltiplos segurando a tecla (compatível com todos navegadores)
+            if (activeKeys[e.code]) return;
+            activeKeys[e.code] = true;
 
             const pad = keyMap[e.code];
             if (pad) {
@@ -360,6 +364,7 @@
         });
 
         window.addEventListener('keyup', (e) => {
+            activeKeys[e.code] = false; // Libera a tecla para poder tocar novamente
             const pad = keyMap[e.code];
             if (pad) {
                 pad.classList.remove('playing');
