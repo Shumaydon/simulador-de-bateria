@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bateria Makey Makey</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #1a202c;
+            color: #e2e8f0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            touch-action: manipulation; /* Evita zoom no double tap no mobile */
+        }
+        
+        .pad {
+            transition: all 0.1s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .pad.playing {
+            transform: scale(0.95);
+            box-shadow: 0 0 15px 5px currentColor;
+            border-color: currentColor;
+            filter: brightness(1.2);
+        }
+
+        /* Overlay de início para liberar o áudio do navegador */
+        #start-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            backdrop-filter: blur(5px);
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col items-center justify-center">
+
+    <!-- Overlay de Inicialização -->
+    <div id="start-overlay" class="cursor-pointer">
+        <h1 class="text-4xl md:text-6xl font-bold mb-4 text-emerald-400 text-center">Bateria Makey Makey</h1>
+        <p class="text-xl text-gray-300 mb-8 text-center max-w-md">Toque na tela ou pressione qualquer tecla para iniciar os motores de áudio.</p>
+        <button class="px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-bold rounded-full text-xl transition-transform transform hover:scale-105 shadow-lg shadow-emerald-500/50">
+            INICIAR
+        </button>
+    </div>
+
+    <!-- Interface Principal -->
+    <div class="w-full max-w-4xl p-6 flex flex-col h-full">
+        
+        <!-- Cabeçalho e Controles -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8 bg-slate-800 p-4 rounded-2xl shadow-lg border border-slate-700">
+            <div>
+                <h1 class="text-2xl font-bold text-white tracking-wider flex items-center gap-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-400"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    SIMULADOR MAKEY MAKEY
+                </h1>
+                <p class="text-slate-400 text-sm mt-1">Conecte os cabos jacaré e divirta-se!</p>
+            </div>
+            
+            <div class="mt-4 md:mt-0 flex items-center gap-4">
+                <label for="timbre-select" class="text-slate-300 font-semibold">Timbre:</label>
+                <select id="timbre-select" class="bg-slate-700 text-white border-2 border-emerald-500 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400 font-bold appearance-none cursor-pointer">
+                    <option value="acoustic">🥁 Acústica</option>
+                    <option value="electronic">👾 Eletrônica</option>
+                    <option value="8bit">🕹️ 8-Bit (Retro)</option>
+                </select>
+            </div>
+        </header>
+
+        <!-- Pads da Bateria -->
+        <div class="flex-grow flex flex-col justify-center">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                
+                <!-- Prato (Crash) -->
+                <div data-key="ArrowUp" data-sound="crash" class="pad flex flex-col items-center justify-center bg-slate-800 border-4 border-yellow-500 text-yellow-400 rounded-2xl p-4 cursor-pointer select-none">
+                    <span class="text-3xl font-bold mb-2">PRATO</span>
+                    <span class="bg-slate-900 px-3 py-1 rounded text-sm text-slate-300 shadow-inner">Seta Cima ⬆️</span>
+                </div>
+
+                <!-- Chimbal (Hi-Hat) -->
+                <div data-key="ArrowLeft" data-sound="hihat" class="pad flex flex-col items-center justify-center bg-slate-800 border-4 border-cyan-500 text-cyan-400 rounded-2xl p-4 cursor-pointer select-none">
+                    <span class="text-3xl font-bold mb-2">CHIMBAL</span>
+                    <span class="bg-slate-900 px-3 py-1 rounded text-sm text-slate-300 shadow-inner">Seta Esq ⬅️</span>
+                </div>
+
+                <!-- Caixa (Snare) -->
+                <div data-key="ArrowDown" data-sound="snare" class="pad flex flex-col items-center justify-center bg-slate-800 border-4 border-rose-500 text-rose-400 rounded-2xl p-4 cursor-pointer select-none">
+                    <span class="text-3xl font-bold mb-2">CAIXA</span>
+                    <span class="bg-slate-900 px-3 py-1 rounded text-sm text-slate-300 shadow-inner">Seta Baixo ⬇️</span>
+                </div>
+
+                <!-- Tom 1 -->
+                <div data-key="ArrowRight" data-sound="tom1" class="pad flex flex-col items-center justify-center bg-slate-800 border-4 border-purple-500 text-purple-400 rounded-2xl p-4 cursor-pointer select-none">
+                    <span class="text-3xl font-bold mb-2">TOM 1</span>
+                    <span class="bg-slate-900 px-3 py-1 rounded text-sm text-slate-300 shadow-inner">Seta Dir ➡️</span>
+                </div>
+
+                <!-- Bumbo (Kick) -->
+                <div data-key="Space" data-sound="kick" class="pad flex flex-col items-center justify-center bg-slate-800 border-4 border-emerald-500 text-emerald-400 rounded-2xl p-4 cursor-pointer select-none md:col-span-2">
+                    <span class="text-4xl font-black mb-2">BUMBO</span>
+                    <span class="bg-slate-900 px-3 py-1 rounded text-sm text-slate-300 shadow-inner">Espaço ␣</span>
+                </div>
+
+                <!-- Tom 2 (Makey Makey W) -->
+                <div data-key="KeyW" data-sound="tom2" class="pad flex flex-col items-center justify-center bg-slate-800 border-4 border-indigo-500 text-indigo-400 rounded-2xl p-4 cursor-pointer select-none">
+                    <span class="text-3xl font-bold mb-2">TOM 2</span>
+                    <span class="bg-slate-900 px-3 py-1 rounded text-sm text-slate-300 shadow-inner">Tecla W</span>
+                </div>
+
+                <!-- Surdo (Makey Makey A) -->
+                <div data-key="KeyA" data-sound="surdo" class="pad flex flex-col items-center justify-center bg-slate-800 border-4 border-orange-500 text-orange-400 rounded-2xl p-4 cursor-pointer select-none">
+                    <span class="text-3xl font-bold mb-2">SURDO</span>
+                    <span class="bg-slate-900 px-3 py-1 rounded text-sm text-slate-300 shadow-inner">Tecla A</span>
+                </div>
+
+            </div>
+        </div>
+
+        <footer class="mt-8 text-center text-slate-500 text-sm">
+            <p>Conecte o "Terra" (Earth) do Makey Makey em você e toque nos objetos conectados às setas, espaço, W e A.</p>
+        </footer>
+    </div>
+
+    <!-- Lógica JavaScript (Áudio e Makey Makey) -->
+    <script>
+        // Variáveis Globais de Áudio
+        let audioCtx;
+        let noiseBuffer;
+        
+        // Elementos da Interface
+        const startOverlay = document.getElementById('start-overlay');
+        const timbreSelect = document.getElementById('timbre-select');
+        const pads = document.querySelectorAll('.pad');
+
+        // Mapeamento de Teclas para Pads
+        const keyMap = {};
+        pads.forEach(pad => {
+            keyMap[pad.dataset.key] = pad;
+        });
+
+        // 1. INICIALIZAÇÃO DO AUDIO (Requisito de segurança do navegador)
+        function initAudio() {
+            if (audioCtx) return;
+            
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext();
+            
+            // Criar buffer de ruído branco (usado para caixas, chimbais e pratos)
+            const bufferSize = audioCtx.sampleRate * 2; // 2 segundos de ruído
+            noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
+            }
+
+            // Oculta overlay
+            startOverlay.style.opacity = '0';
+            setTimeout(() => startOverlay.remove(), 300);
+        }
+
+        startOverlay.addEventListener('click', initAudio);
+        document.addEventListener('keydown', (e) => {
+            if(startOverlay.parentNode) initAudio();
+        }, { once: true });
+
+        // 2. MOTOR DE SÍNTESE SONORA (Gerador de Timbres)
+        function playSound(type) {
+            if (!audioCtx) return;
+            
+            const timbre = timbreSelect.value;
+            const t = audioCtx.currentTime;
+
+            // Nodos base
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            // Nodos para ruído (Snare/Hihat/Crash)
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = noiseBuffer;
+            const noiseFilter = audioCtx.createBiquadFilter();
+            const noiseGain = audioCtx.createGain();
+            noise.connect(noiseFilter);
+            noiseFilter.connect(noiseGain);
+            noiseGain.connect(audioCtx.destination);
+
+            // Parâmetros baseados no instrumento e no timbre
+            switch (type) {
+                case 'kick':
+                    if (timbre === '8bit') {
+                        osc.type = 'square';
+                        osc.frequency.setValueAtTime(150, t);
+                        osc.frequency.exponentialRampToValueAtTime(0.01, t + 0.1);
+                        gain.gain.setValueAtTime(0.5, t);
+                        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+                        osc.start(t);
+                        osc.stop(t + 0.1);
+                    } else if (timbre === 'electronic') {
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(150, t);
+                        osc.frequency.exponentialRampToValueAtTime(40, t + 0.5); // Grave longo (808 style)
+                        gain.gain.setValueAtTime(1, t);
+                        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.8);
+                        osc.start(t);
+                        osc.stop(t + 0.8);
+                    } else { // acoustic
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(150, t);
+                        osc.frequency.exponentialRampToValueAtTime(0.01, t + 0.5);
+                        gain.gain.setValueAtTime(1, t);
+                        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
+                        osc.start(t);
+                        osc.stop(t + 0.5);
+                    }
+                    break;
+
+                case 'snare':
+                    // Mistura de tom com ruído branco
+                    if (timbre === '8bit') {
+                        osc.type = 'square';
+                        osc.frequency.setValueAtTime(250, t);
+                        gain.gain.setValueAtTime(0.3, t);
+                        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+                        
+                        noiseFilter.type = 'highpass';
+                        noiseFilter.frequency.value = 1000;
+                        noiseGain.gain.setValueAtTime(0.4, t);
+                        noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+                    } else if (timbre === 'electronic') {
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(250, t);
+                        gain.gain.setValueAtTime(0.5, t);
+                        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+                        
+                        noiseFilter.type = 'highpass';
+                        noiseFilter.frequency.value = 2000;
+                        noiseGain.gain.setValueAtTime(0.6, t);
+                        noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 0.25);
+                    } else { // acoustic
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(250, t);
+                        gain.gain.setValueAtTime(0.5, t);
+                        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+                        
+                        noiseFilter.type = 'highpass';
+                        noiseFilter.frequency.value = 1000;
+                        noiseGain.gain.setValueAtTime(0.5, t);
+                        noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+                    }
+                    osc.start(t); osc.stop(t + 0.3);
+                    noise.start(t); noise.stop(t + 0.3);
+                    break;
+
+                case 'hihat':
+                    // Apenas ruído filtrado (alta frequência)
+                    osc.disconnect(); // Não usa oscilador
+                    if (timbre === '8bit') {
+                        noiseFilter.type = 'bandpass';
+                        noiseFilter.frequency.value = 5000;
+                        noiseGain.gain.setValueAtTime(0.5, t);
+                        noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 0.05); // Curto e seco
+                    } else if (timbre === 'electronic') {
+                        noiseFilter.type = 'highpass';
+                        noiseFilter.frequency.value = 7000;
+                        noiseGain.gain.setValueAtTime(0.5, t);
+                        noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+                    } else { // acoustic
+                        noiseFilter.type = 'highpass';
+                        noiseFilter.frequency.value = 5000;
+                        noiseGain.gain.setValueAtTime(0.7, t);
+                        noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+                    }
+                    noise.start(t); noise.stop(t + 0.1);
+                    break;
+
+                case 'crash':
+                    osc.disconnect(); // Apenas ruído longo metálico
+                    noiseFilter.type = 'bandpass';
+                    noiseFilter.frequency.value = timbre === '8bit' ? 2000 : (timbre === 'electronic' ? 4000 : 3000);
+                    noiseFilter.Q.value = 0.5; // Ressonância para dar tom metálico
+                    
+                    noiseGain.gain.setValueAtTime(0.6, t);
+                    noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 1.5); // Sustentação longa
+                    noise.start(t); noise.stop(t + 1.5);
+                    break;
+
+                case 'tom1':
+                case 'tom2':
+                case 'surdo':
+                    // Tons variam principalmente na frequência
+                    let freq = type === 'tom1' ? 200 : (type === 'tom2' ? 150 : 100);
+                    
+                    if (timbre === '8bit') {
+                        osc.type = 'square';
+                        osc.frequency.setValueAtTime(freq, t);
+                        osc.frequency.exponentialRampToValueAtTime(freq/2, t + 0.2);
+                        gain.gain.setValueAtTime(0.3, t);
+                        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+                        osc.start(t); osc.stop(t + 0.2);
+                    } else if (timbre === 'electronic') {
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(freq + 50, t);
+                        osc.frequency.exponentialRampToValueAtTime(10, t + 0.4);
+                        gain.gain.setValueAtTime(0.8, t);
+                        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.4);
+                        osc.start(t); osc.stop(t + 0.4);
+                    } else { // acoustic
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(freq, t);
+                        osc.frequency.exponentialRampToValueAtTime(30, t + 0.3);
+                        gain.gain.setValueAtTime(0.8, t);
+                        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+                        osc.start(t); osc.stop(t + 0.3);
+                    }
+                    break;
+            }
+        }
+
+        // 3. INTERAÇÃO E ANIMAÇÃO VISUAL
+        function triggerPad(pad) {
+            if (!pad) return;
+            
+            // Toca som
+            const soundType = pad.dataset.sound;
+            playSound(soundType);
+
+            // Efeito visual
+            pad.classList.add('playing');
+            
+            // Remove o efeito após um tempinho se for por clique
+            // Para teclado, cuidamos no keyup também
+            setTimeout(() => {
+                pad.classList.remove('playing');
+            }, 100);
+        }
+
+        // Eventos de Teclado (Makey Makey imita um teclado)
+        window.addEventListener('keydown', (e) => {
+            // Previne scroll da página quando aperta barra de espaço ou setas
+            if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
+                e.preventDefault();
+            }
+
+            // Impede disparos múltiplos segurando a tecla
+            if (e.repeat) return; 
+
+            const pad = keyMap[e.code];
+            if (pad) {
+                triggerPad(pad);
+                pad.classList.add('playing'); // Mantém apertado visualmente enquanto segura a tecla
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            const pad = keyMap[e.code];
+            if (pad) {
+                pad.classList.remove('playing');
+            }
+        });
+
+        // Eventos de Mouse/Touch para testar na tela (sem o Makey Makey)
+        pads.forEach(pad => {
+            // Touch/Mouse down
+            pad.addEventListener('mousedown', () => triggerPad(pad));
+            pad.addEventListener('touchstart', (e) => {
+                e.preventDefault(); // Previne emulação de clique
+                triggerPad(pad);
+            }, { passive: false });
+
+            // Touch/Mouse up visual fix
+            pad.addEventListener('mouseup', () => pad.classList.remove('playing'));
+            pad.addEventListener('mouseleave', () => pad.classList.remove('playing'));
+            pad.addEventListener('touchend', () => pad.classList.remove('playing'));
+        });
+
+        // Foco de volta na tela quando troca o timbre para o teclado continuar funcionando direto
+        timbreSelect.addEventListener('change', () => {
+            timbreSelect.blur();
+        });
+
+    </script>
+</body>
+</html>
